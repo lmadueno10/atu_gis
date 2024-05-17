@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: queue-sender-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: queue-sender
+  template:
+    metadata:
+      labels:
+        app: queue-sender
+    spec:
+      containers:
+        - name: queue-sender
+          image: queue-sender:latest
+          ports:
+            - containerPort: 3001
+          imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: "100m"
+        - name: rabbitmq
+          image: rabbitmq:3.8
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+      imagePullSecrets:
+      - name: regcred
