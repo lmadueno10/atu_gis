@@ -4,7 +4,10 @@ const socketIo = require("socket.io");
 const cors = require("cors");
 const redis = require("ioredis");
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3004;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
+const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+const REDIS_EXPIRATION = parseInt(process.env.REDIS_EXPIRATION) || 86400;
 
 const app = express();
 app.use(cors());
@@ -16,21 +19,23 @@ app.use((req, res, next) => {
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: "*",
         methods: ["GET", "POST"],
     },
+    path: "/socket-server/",
 });
 
-const redisClient = redis.createClient();
+const redisClient = redis.createClient(REDIS_URL);
 
-redisClient.hgetall("userSubscriptions", (err, subscriptions) => {
+/*redisClient.hgetall("userSubscriptions", (err, subscriptions) => {
     if (err) {
         console.error("Error al obtener las suscripciones de los usuarios:", err);
         return;
     }
+});*/
 
-    console.log("userSubscriptions:", subscriptions);
-});
+console.log("CORS_ORIGIN", CORS_ORIGIN);
+console.log("REDIS_URL", REDIS_URL);
 
 io.on("connection", (socket) => {
     console.log("Nuevo cliente conectado");
@@ -49,7 +54,6 @@ io.on("connection", (socket) => {
 
     socket.on("subscribeToPlaca", (placas) => {
         console.log(`Cliente ${socket.id} suscrito a la placa ${placas}`);
-        //userSubscriptions[socket.id] = placas;
 
         redisClient.hset("userSubscriptions", socket.id, JSON.stringify(placas), (err, result) => {
             if (err) {
@@ -57,13 +61,13 @@ io.on("connection", (socket) => {
                 return;
             }
 
-            redisClient.expire("userSubscriptions", 86400);
+            redisClient.expire("userSubscriptions", REDIS_EXPIRATION);
         });
     });
 
     socket.on("unsubscribeFromPlaca", () => {
         console.log(`Cliente ${socket.id} canceló la suscripción a una placa`);
-        //delete userSubscriptions[socket.id];
+
         redisClient.hdel("userSubscriptions", socket.id, (err, result) => {
             if (err) {
                 console.error("Error al borrar la clave:", err);
@@ -74,13 +78,15 @@ io.on("connection", (socket) => {
     });
 
     socket.on("newCoordinates", (coordinates) => {
-        //socket.broadcast.emit("newCoordinates", coordinates);
+        console.log("Nuevas coordenadas recibidas");
 
         redisClient.hgetall("userSubscriptions", (err, subscriptions) => {
             if (err) {
                 console.error("Error al obtener las suscripciones de los usuarios:", err);
                 return;
             }
+
+            console.log("newCoordinates", coordinates);
 
             for (const socketId in subscriptions) {
                 const placaString = subscriptions[socketId];
@@ -90,24 +96,7 @@ io.on("connection", (socket) => {
                     io.to(socketId).emit("newCoordinates", coordinates);
                 }
             }
-
-            /*Object.values(subscriptions).forEach((subscription) => {
-                const placas = JSON.parse(subscription);
-                console.log("=>", subscription);
-                if (placas.includes(coordinates.placa)) {
-                    io.to(socket.id).emit("newCoordinates", coordinates);
-                }
-            });*/
         });
-
-        /*Object.keys(userSubscriptions).forEach((clientId) => {
-            const placas = userSubscriptions[clientId];
-
-            if (placas.includes(coordinates.placa)) {
-                console.log("Coordenadas recibidas:", coordinates);
-                io.to(clientId).emit("newCoordinates", coordinates);
-            }
-        });*/
     });
 });
 

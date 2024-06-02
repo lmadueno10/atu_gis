@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: queue-sender
+  labels:
+    app: queue-sender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: queue-sender
+  template:
+    metadata:
+      labels:
+        app: queue-sender
+    spec:
+      containers:
+      - name: queue-sender
+        image: lmadueno/queue-sender:v1
+        ports:
+        - containerPort: 3001
+        envFrom:
+          - configMapRef:
+              name: queue-sender-config
+        env:
+          - name: NODE_ENV
+            value: production
+      imagePullSecrets:
+        - name: regcred

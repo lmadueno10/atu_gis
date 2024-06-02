@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: coordinates-processor-service
+spec:
+  selector:
+    app: coordinates-processor
+  ports:
+    - protocol: TCP
+      port: 80          # Puerto del servicio
+      targetPort: 3002  # Puerto del contenedor
+  type: NodePort

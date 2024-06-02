@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: queue-receiver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: queue-receiver
+  template:
+    metadata:
+      labels:
+        app: queue-receiver
+    spec:
+      containers:
+      - name: queue-receiver
+        image: lmadueno/queue-receiver:v1
+        ports:
+        - containerPort: 3002
+        env:
+        - name: RABBITMQ_HOST
+          value: "rabbitmq"
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: NODE_ENV
+          value: "production"
+        command: ["sh", "-c", "./wait-for-it.sh rabbitmq:5672 --timeout=30 -- npm run dev"]
+      volumes:
+      - name: queue-receiver-volume
+        emptyDir: {}
+      restartPolicy: Always

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coordinates-processor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coordinates-processor
+  template:
+    metadata:
+      labels:
+        app: coordinates-processor
+    spec:
+      containers:
+        - name: coordinates-processor
+          image: lmadueno/coordinates-processor:latest
+          ports:
+            - containerPort: 3002
+          env:
+            - name: AMQP_URL
+              value: "amqp://guest:guest@rabbitmq-service:5672"
+            - name: PG_CONNECTION_STRING
+              value: "postgresql://atu_user:1a2a3b++@192.168.1.8:5432/testing"
+            - name: SOCKET_SERVER_URL
+              value: "http://socket-server.local"

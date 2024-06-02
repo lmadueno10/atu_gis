@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: queue-sender-config
+data:
+  CONFIG_KEY1: value1
+  CONFIG_KEY2: value2
+  CONFIG_KEY3: value3

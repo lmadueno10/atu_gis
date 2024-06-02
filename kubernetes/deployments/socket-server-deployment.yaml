@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: socket-server
+  labels:
+    app: socket-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: socket-server
+  template:
+    metadata:
+      labels:
+        app: socket-server
+    spec:
+      containers:
+      - name: socket-server
+        image: lmadueno/socket-server:v1
+        ports:
+        - containerPort: 3003
+        env:
+          - name: REDIS_HOST
+            value: redis
+        envFrom:
+          - configMapRef:
+              name: socket-server-config
+      imagePullSecrets:
+        - name: regcred

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-gis-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: react-gis-app
+  template:
+    metadata:
+      labels:
+        app: react-gis-app
+    spec:
+      containers:
+      - name: react-gis-app
+        image: lmadueno/react-gis-app:v2
+        ports:
+        - containerPort: 8080
+        env:
+          - name: VITE_SOCKET_SERVER_URL
+            value: "http://socket_server:3003"
