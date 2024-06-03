@@ -24,7 +24,7 @@ export default function CustomControlIcon({ title = "", position = "topright", c
             <Box>
                 {!showPaper && (
                     <Tooltip
-                        title="Delete"
+                        title="Test"
                         placement="left"
                         PopperProps={{
                             modifiers: [

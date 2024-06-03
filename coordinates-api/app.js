@@ -9,7 +9,7 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 const AMQP_URL = process.env.AMQP_URL || "amqp://localhost";
-const INSTANCE_ID = os.hostname();
+const INSTANCE_ID = `${os.hostname()}-${PORT}`;
 
 const connection = amqp.connect([AMQP_URL], {
     heartbeatIntervalInSeconds: 6000,

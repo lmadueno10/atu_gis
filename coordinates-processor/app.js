@@ -6,10 +6,14 @@ const ioClient = require("socket.io-client");
 const AMQP_URL = process.env.AMQP_URL || "amqp://localhost";
 const PG_CONNECTION_STRING =
     process.env.PG_CONNECTION_STRING || "postgresql://atu_user:1a2a3b++@localhost:5432/testing";
-const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL || "http://localhost:3004";
-const PORT = process.env.PORT || 3002;
+const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL || "http://localhost:3051";
+const PORT = process.env.PORT || 3050;
 
 let postgresClient;
+let amqpConnection;
+let amqpChannel;
+let server;
+
 const socket = ioClient(SOCKET_SERVER_URL, {
     path: "/socket-io",
 });
@@ -26,29 +30,21 @@ const app = express();
 
 async function connect() {
     try {
-        const connection = await amqp.connect(AMQP_URL);
-        const channel = await connection.createChannel();
+        amqpConnection = await amqp.connect(AMQP_URL);
+        amqpChannel = await amqpConnection.createChannel();
         const queueName = "transmission_queue";
 
-        await channel.assertQueue(queueName, { durable: true });
+        await amqpChannel.assertQueue(queueName, { durable: true });
 
         console.log("Esperando mensajes...");
 
-        channel.consume(queueName, async (msg) => {
+        amqpChannel.consume(queueName, async (msg) => {
             if (msg !== null) {
                 const coordinates = JSON.parse(msg.content.toString());
                 console.log("Coordenadas recibidas:", coordinates);
                 await insertIntoPostgres(coordinates);
                 socket.emit("newCoordinates", coordinates);
-                channel.ack(msg);
-            }
-        });
-
-        process.on("SIGINT", () => {
-            console.log("Desconectando...");
-            connection.close();
-            if (postgresClient) {
-                postgresClient.end();
+                amqpChannel.ack(msg);
             }
         });
     } catch (error) {
@@ -111,12 +107,35 @@ async function insertIntoPostgres(coordinates) {
     }
 }
 
+process.on("SIGINT", async () => {
+    console.log("Desconectando...");
+
+    if (amqpConnection) {
+        await amqpConnection.close();
+        console.log("Conexión AMQP cerrada.");
+    }
+
+    if (postgresClient) {
+        await postgresClient.end();
+        console.log("Conexión PostgreSQL cerrada.");
+    }
+
+    if (server) {
+        server.close(() => {
+            console.log("Servidor Express cerrado.");
+            process.exit(0);
+        });
+    } else {
+        process.exit(0);
+    }
+});
+
 connect();
 
 app.get("/", (req, res) => {
     res.send(`Coordinates processor OK!`);
 });
 
-app.listen(PORT, () => {
+server = app.listen(PORT, () => {
     console.log(`Coordinates-processor: Servidor API iniciado en el puerto ${PORT}`);
 });

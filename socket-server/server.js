@@ -2,7 +2,7 @@ const http = require("http");
 const socketIo = require("socket.io");
 const redis = require("ioredis");
 
-const PORT = process.env.PORT || 3004;
+const PORT = process.env.PORT || 3051;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const REDIS_EXPIRATION = parseInt(process.env.REDIS_EXPIRATION) || 86400;

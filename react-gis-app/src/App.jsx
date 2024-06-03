@@ -5,14 +5,13 @@ import MapContainer from "./components/MapContainer/MapContainer";
 import { Marker, Popup } from "react-leaflet";
 import MainLayout from "./layouts/MainLayout/MainLayout";
 import StatsPanel from "./components/StatsPanel/StatsPanel";
-import MultiLevelMenu from "./components/MultiLevelMenu/MultiLevelMenu";
 
 function App() {
     const [markers, setMarkers] = useState([
-        { placa: "ABC126", position: [51.505, -0.09] },
-        { placa: "DEF456", position: [51.51, -0.1] },
-        { placa: "GHI789", position: [51.49, -0.1] },
-        { placa: "GUT123", position: [51.49, -0.1] },
+        { placa: "ABC126", position: [-12.0464, -77.0428] },
+        { placa: "DEF456", position: [-12.0455, -77.0301] },
+        { placa: "GHI789", position: [-12.0483, -77.0283] },
+        { placa: "GUT123", position: [-12.05, -77.04] },
     ]);
     const markerRefs = useRef([]);
     const VITE_SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_SERVER_URL;
@@ -34,13 +33,10 @@ function App() {
         });
 
         socket.on("newCoordinates", (data) => {
-            alert("JAIMITO EL CHUNKS");
-            const placa = data.placa;
-            const latitude = 51.51 + Math.random() * 0.1 - 0.05;
-            const longitude = -0.09 + Math.random() * 0.1 - 0.05;
+            const { placa, latitud, longitud } = data;
 
             if (markerRefs.current[placa] && markerRefs.current[placa].current) {
-                markerRefs.current[placa].current.setLatLng([latitude, longitude]);
+                markerRefs.current[placa].current.setLatLng([latitud, longitud]);
             }
 
             //console.log("Evento recibido:", data);
@@ -61,7 +57,7 @@ function App() {
 
     return (
         <MainLayout>
-            <MapContainer center={[51.505, -0.09]}>
+            <MapContainer center={[-12.0464, -77.0428]}>
                 {markers.map((marker, index) => (
                     <Marker
                         key={marker.placa}

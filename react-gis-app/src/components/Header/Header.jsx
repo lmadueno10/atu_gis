@@ -37,7 +37,7 @@ export default function Header() {
                     component="div"
                     sx={{ display: { xs: "none", sm: "block" } }}
                 >
-                    ATU 12:18
+                    ATU
                 </Typography>
                 <Box sx={{ flexGrow: 1 }} />
                 <Box sx={{ display: { xs: "none", md: "flex" } }}>
