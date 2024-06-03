@@ -1,41 +1,24 @@
-const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
-const cors = require("cors");
 const redis = require("ioredis");
 
 const PORT = process.env.PORT || 3004;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const REDIS_EXPIRATION = parseInt(process.env.REDIS_EXPIRATION) || 86400;
+const CUSTOM_PATH = "/socket-io";
 
-const app = express();
-app.use(cors());
-app.use((req, res, next) => {
-    console.log("Middleware de CORS aplicado");
-    next();
-});
+const server = http.createServer();
 
-const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"],
     },
-    path: "/socket-server/",
+    path: CUSTOM_PATH,
 });
 
 const redisClient = redis.createClient(REDIS_URL);
-
-/*redisClient.hgetall("userSubscriptions", (err, subscriptions) => {
-    if (err) {
-        console.error("Error al obtener las suscripciones de los usuarios:", err);
-        return;
-    }
-});*/
-
-console.log("CORS_ORIGIN", CORS_ORIGIN);
-console.log("REDIS_URL", REDIS_URL);
 
 io.on("connection", (socket) => {
     console.log("Nuevo cliente conectado");
@@ -101,5 +84,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`Servidor de Socket.IO iniciado en el puerto ${PORT}`);
+    console.log(`Servidor de Socket.IO iniciado en el puerto ${PORT} con la ruta ${CUSTOM_PATH}`);
 });

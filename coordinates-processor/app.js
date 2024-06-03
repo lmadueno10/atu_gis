@@ -10,7 +10,18 @@ const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL || "http://localhost:300
 const PORT = process.env.PORT || 3002;
 
 let postgresClient;
-const socket = ioClient(SOCKET_SERVER_URL);
+const socket = ioClient(SOCKET_SERVER_URL, {
+    path: "/socket-io",
+});
+
+socket.on("connect", () => {
+    console.log("Conectado al servidor de sockets con ID:", socket.id);
+});
+
+socket.on("connect_error", (error) => {
+    console.error("Error de conexión con el servidor de sockets:", error);
+});
+
 const app = express();
 
 async function connect() {
@@ -69,6 +80,31 @@ async function insertIntoPostgres(coordinates) {
         ];
 
         await postgresClient.query(query, values);
+
+        const upsertVehiculosQuery = `
+        INSERT INTO scm.vehiculos (placa, fecha_hora, lat, lng, velocidad, altitud, orientacion)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (placa) DO UPDATE 
+        SET 
+            fecha_hora = EXCLUDED.fecha_hora,
+            lat = EXCLUDED.lat,
+            lng = EXCLUDED.lng,
+            velocidad = EXCLUDED.velocidad,
+            altitud = EXCLUDED.altitud,
+            orientacion = EXCLUDED.orientacion`;
+
+        const upsertVehiculosValues = [
+            coordinates.placa,
+            coordinates.fechaHoraRegistroTrack,
+            coordinates.latitud,
+            coordinates.longitud,
+            coordinates.velocidad,
+            coordinates.altitud,
+            coordinates.orientacion,
+        ];
+
+        await postgresClient.query(upsertVehiculosQuery, upsertVehiculosValues);
+
         console.log("Datos insertados en PostgreSQL.");
     } catch (error) {
         console.error("Error al insertar datos en PostgreSQL:", error);

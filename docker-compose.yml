@@ -55,7 +55,7 @@ services:
             context: ./coordinates-api
             dockerfile: Dockerfile
         deploy:
-            replicas: 1
+            replicas: 3
             restart_policy:
                 condition: on-failure
         env_file: coordinates-api/.env.production
