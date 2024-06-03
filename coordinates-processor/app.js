@@ -2,12 +2,15 @@ const express = require("express");
 const { Client } = require("pg");
 const amqp = require("amqplib");
 const ioClient = require("socket.io-client");
+require("dotenv").config();
 
 const AMQP_URL = process.env.AMQP_URL || "amqp://localhost";
 const PG_CONNECTION_STRING =
     process.env.PG_CONNECTION_STRING || "postgresql://atu_user:1a2a3b++@localhost:5432/testing";
 const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL || "http://localhost:3051";
 const PORT = process.env.PORT || 3050;
+
+console.log("PG_CONNECTION_STRING", PG_CONNECTION_STRING);
 
 let postgresClient;
 let amqpConnection;
