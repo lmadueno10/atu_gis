@@ -1,7 +1,6 @@
 const express = require("express");
 const { Client } = require("pg");
 const amqp = require("amqplib");
-const ioClient = require("socket.io-client");
 const os = require("os");
 
 require("dotenv").config();
@@ -9,28 +8,13 @@ require("dotenv").config();
 const AMQP_URL = process.env.AMQP_URL || "amqp://localhost";
 const PG_CONNECTION_STRING =
     process.env.PG_CONNECTION_STRING || "postgresql://atu_user:1a2a3b++@localhost:5432/testing";
-const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL || "http://localhost:3051";
 const PORT = process.env.PORT || 3050;
 const INSTANCE_ID = `${os.hostname()}-${PORT}`;
-
-console.log("PG_CONNECTION_STRING", PG_CONNECTION_STRING);
 
 let postgresClient;
 let amqpConnection;
 let amqpChannel;
 let server;
-
-const socket = ioClient(SOCKET_SERVER_URL, {
-    path: "/socket-io",
-});
-
-socket.on("connect", () => {
-    console.log("Conectado al servidor de sockets con ID:", socket.id);
-});
-
-socket.on("connect_error", (error) => {
-    console.error("Error de conexión con el servidor de sockets:", error);
-});
 
 const app = express();
 
@@ -47,10 +31,16 @@ async function connect() {
 
         amqpChannel.consume(queueName, async (msg) => {
             if (msg !== null) {
-                const coordinates = JSON.parse(msg.content.toString());
-                console.log("Coordenadas recibidas:", coordinates);
-                await insertIntoPostgres(coordinates);
-                socket.emit("newCoordinates", coordinates);
+                const coordinatesArr = JSON.parse(msg.content.toString());
+
+                if (!Array.isArray(coordinatesArr)) {
+                    console.error("El mensaje recibido no es un array.");
+                    amqpChannel.ack(msg);
+                    return;
+                }
+
+                console.log("Coordenadas recibidas:", coordinatesArr);
+                await insertIntoPostgres(coordinatesArr);
                 amqpChannel.ack(msg);
             }
         });
@@ -59,7 +49,19 @@ async function connect() {
     }
 }
 
-async function insertIntoPostgres(coordinates) {
+function generatePlaceholders(count, valuesPerRow) {
+    const placeholders = [];
+    for (let i = 0; i < count; i++) {
+        const row = [];
+        for (let j = 0; j < valuesPerRow; j++) {
+            row.push(`$${i * valuesPerRow + j + 1}`);
+        }
+        placeholders.push(`(${row.join(", ")})`);
+    }
+    return placeholders.join(", ");
+}
+
+async function insertIntoPostgres(coordinatesArr) {
     try {
         if (!postgresClient) {
             postgresClient = new Client({
@@ -68,26 +70,45 @@ async function insertIntoPostgres(coordinates) {
             await postgresClient.connect();
         }
 
-        const query = `
+        const insertTransmisionValues = [];
+        const upsertVehiculosValues = [];
+
+        const uniqueCoordinates = new Map();
+
+        coordinatesArr.forEach((coordinate) => {
+            insertTransmisionValues.push(
+                coordinate.fechaHoraRegistroTrack,
+                coordinate.latitud,
+                coordinate.longitud,
+                coordinate.velocidad,
+                coordinate.altitud,
+                coordinate.orientacion,
+                coordinate.placa,
+                INSTANCE_ID
+            );
+
+            uniqueCoordinates.set(coordinate.placa, coordinate);
+        });
+
+        uniqueCoordinates.forEach((coordinate) => {
+            upsertVehiculosValues.push(
+                coordinate.placa,
+                coordinate.fechaHoraRegistroTrack,
+                coordinate.latitud,
+                coordinate.longitud,
+                coordinate.velocidad,
+                coordinate.altitud,
+                coordinate.orientacion
+            );
+        });
+
+        const insertTransmisionQuery = `
         INSERT INTO scm.transmision (fecha_hora, lat, lng, velocidad, altitud, orientacion, placa, instance_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`;
-
-        const values = [
-            coordinates.fechaHoraRegistroTrack,
-            coordinates.latitud,
-            coordinates.longitud,
-            coordinates.velocidad,
-            coordinates.altitud,
-            coordinates.orientacion,
-            coordinates.placa,
-            INSTANCE_ID,
-        ];
-
-        await postgresClient.query(query, values);
+        VALUES ${generatePlaceholders(coordinatesArr.length, 8)}`;
 
         const upsertVehiculosQuery = `
         INSERT INTO scm.vehiculos (placa, fecha_hora, lat, lng, velocidad, altitud, orientacion)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        VALUES ${generatePlaceholders(uniqueCoordinates.size, 7)}
         ON CONFLICT (placa) DO UPDATE 
         SET 
             fecha_hora = EXCLUDED.fecha_hora,
@@ -97,16 +118,7 @@ async function insertIntoPostgres(coordinates) {
             altitud = EXCLUDED.altitud,
             orientacion = EXCLUDED.orientacion`;
 
-        const upsertVehiculosValues = [
-            coordinates.placa,
-            coordinates.fechaHoraRegistroTrack,
-            coordinates.latitud,
-            coordinates.longitud,
-            coordinates.velocidad,
-            coordinates.altitud,
-            coordinates.orientacion,
-        ];
-
+        await postgresClient.query(insertTransmisionQuery, insertTransmisionValues);
         await postgresClient.query(upsertVehiculosQuery, upsertVehiculosValues);
 
         console.log("Datos insertados en PostgreSQL.");
