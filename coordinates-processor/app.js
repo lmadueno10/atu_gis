@@ -2,6 +2,8 @@ const express = require("express");
 const { Client } = require("pg");
 const amqp = require("amqplib");
 const ioClient = require("socket.io-client");
+const os = require("os");
+
 require("dotenv").config();
 
 const AMQP_URL = process.env.AMQP_URL || "amqp://localhost";
@@ -9,6 +11,7 @@ const PG_CONNECTION_STRING =
     process.env.PG_CONNECTION_STRING || "postgresql://atu_user:1a2a3b++@localhost:5432/testing";
 const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL || "http://localhost:3051";
 const PORT = process.env.PORT || 3050;
+const INSTANCE_ID = `${os.hostname()}-${PORT}`;
 
 console.log("PG_CONNECTION_STRING", PG_CONNECTION_STRING);
 
@@ -38,6 +41,7 @@ async function connect() {
         const queueName = "transmission_queue";
 
         await amqpChannel.assertQueue(queueName, { durable: true });
+        amqpChannel.prefetch(1);
 
         console.log("Esperando mensajes...");
 
@@ -65,8 +69,8 @@ async function insertIntoPostgres(coordinates) {
         }
 
         const query = `
-        INSERT INTO scm.transmision (fecha_hora, lat, lng, velocidad, altitud, orientacion, placa)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)`;
+        INSERT INTO scm.transmision (fecha_hora, lat, lng, velocidad, altitud, orientacion, placa, instance_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`;
 
         const values = [
             coordinates.fechaHoraRegistroTrack,
@@ -76,6 +80,7 @@ async function insertIntoPostgres(coordinates) {
             coordinates.altitud,
             coordinates.orientacion,
             coordinates.placa,
+            INSTANCE_ID,
         ];
 
         await postgresClient.query(query, values);

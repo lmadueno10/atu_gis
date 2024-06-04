@@ -29,6 +29,8 @@ wss.on("connection", (ws) => {
     console.log("Nuevo cliente conectado");
 
     ws.on("message", async (message) => {
+        console.log("Mensaje recibido:", message);
+
         try {
             const data = JSON.parse(message);
             const validationResult = validateData(data);
@@ -46,6 +48,8 @@ wss.on("connection", (ws) => {
 
             ws.send(JSON.stringify(validationResult));
         } catch (error) {
+            console.error("Error al procesar el mensaje:", error);
+
             if (error instanceof SyntaxError) {
                 ws.send(
                     JSON.stringify({
@@ -134,6 +138,7 @@ function validateData(data) {
     return {
         codResultado: 1,
         desResultado: "Trama correctamente recibida y registrada",
+        INSTANCE_ID,
     };
 }
 

@@ -33,6 +33,8 @@ function App() {
         });
 
         socket.on("newCoordinates", (data) => {
+            alert("newCoordinates");
+
             const { placa, latitud, longitud } = data;
 
             if (markerRefs.current[placa] && markerRefs.current[placa].current) {
