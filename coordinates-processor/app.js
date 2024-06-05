@@ -39,7 +39,7 @@ async function connect() {
                     return;
                 }
 
-                console.log("Coordenadas recibidas:", coordinatesArr);
+                //console.log("Coordenadas recibidas:", coordinatesArr);
                 await insertIntoPostgres(coordinatesArr);
                 amqpChannel.ack(msg);
             }

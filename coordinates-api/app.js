@@ -23,7 +23,30 @@ const channelWrapper = connection.createChannel({
 const server = http.createServer(app);
 
 // WebSocket server
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({
+    server,
+    clientTracking: true,
+    perMessageDeflate: {
+        zlibDeflateOptions: {
+            chunkSize: 1024,
+            memLevel: 7,
+            level: 3,
+        },
+        zlibInflateOptions: {
+            chunkSize: 10 * 1024,
+        },
+        clientNoContextTakeover: true,
+        serverNoContextTakeover: true,
+        serverMaxWindowBits: 10,
+        concurrencyLimit: 10,
+        threshold: 1024,
+    },
+    verifyClient: (info, done) => {
+        //console.log(`Client trying to connect: ${info.origin}`);
+        done(true);
+    },
+});
+
 const SUCCESS_CODE = 1;
 
 wss.on("connection", (ws) => {
@@ -90,7 +113,7 @@ async function handleMessage(ws, message) {
             })
         );
     } catch (error) {
-        console.error("Error al procesar el mensaje:", error);
+        console.error("Error al procesar el mensaje:", message);
 
         if (error instanceof SyntaxError) {
             ws.send(
