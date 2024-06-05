@@ -3,12 +3,15 @@ const http = require("http");
 const WebSocket = require("ws");
 const amqp = require("amqp-connection-manager");
 const os = require("os");
+const { Client } = require("pg");
 
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const AMQP_URL = process.env.AMQP_URL || "amqp://localhost";
+const PG_CONNECTION_STRING =
+    process.env.PG_CONNECTION_STRING || "postgresql://atu_user:1a2a3b++@localhost:5432/testing";
 const INSTANCE_ID = `${os.hostname()}-${PORT}`;
 
 const connection = amqp.connect([AMQP_URL], {
@@ -18,6 +21,12 @@ const connection = amqp.connect([AMQP_URL], {
 const channelWrapper = connection.createChannel({
     json: true,
 });
+
+// PostgreSQL client
+const pgClient = new Client({
+    connectionString: PG_CONNECTION_STRING,
+});
+pgClient.connect();
 
 // Servidor HTTP
 const server = http.createServer(app);
@@ -49,18 +58,59 @@ const wss = new WebSocket.Server({
 
 const SUCCESS_CODE = 1;
 
-wss.on("connection", (ws) => {
+wss.on("connection", (ws, req) => {
     console.log("Nuevo cliente conectado");
 
     ws.on("message", async (message) => {
+        const params = new URLSearchParams(req.url.split("?")[1]);
+        const token = params.get("token");
+
+        if (!token) {
+            ws.send(
+                JSON.stringify({
+                    codResultado: 15,
+                    desResultado: "Token no proporcionado en la URL",
+                })
+            );
+            return;
+        }
+
+        const tokenValidation = await validateToken(token);
+
+        if (!tokenValidation.isValid) {
+            ws.send(
+                JSON.stringify({
+                    codResultado: 16,
+                    desResultado: "Token inválido o no autorizado",
+                })
+            );
+            return;
+        }
+
         console.log("Mensaje recibido:", message);
-        await handleMessage(ws, message);
+        await handleMessage(ws, message, tokenValidation.empresaId);
     });
 
     ws.on("close", () => {
         console.log("Cliente desconectado");
     });
 });
+
+async function validateToken(token) {
+    try {
+        const res = await pgClient.query("SELECT empresa_id FROM test.acceso WHERE token = $1", [
+            token,
+        ]);
+        if (res.rowCount > 0) {
+            return { isValid: true, empresaId: res.rows[0].empresa_id };
+        } else {
+            return { isValid: false, empresaId: null };
+        }
+    } catch (error) {
+        console.error("Error al validar el token:", error);
+        return { isValid: false, empresaId: null };
+    }
+}
 
 async function handleMessage(ws, message) {
     try {
@@ -208,7 +258,7 @@ function validateData(data, mostrarPlaca = false) {
 }
 
 app.get("/", (req, res) => {
-    res.send(`Coordinates API OK!, instance ${INSTANCE_ID}`);
+    res.send(`Coordinates API OK!, instancia ${INSTANCE_ID}`);
 });
 
 server.listen(PORT, () => {
