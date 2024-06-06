@@ -39,7 +39,7 @@ async function connect() {
                     return;
                 }
 
-                //console.log("Coordenadas recibidas:", coordinatesArr);
+                console.log("Coordenadas recibidas:", coordinatesArr);
                 await insertIntoPostgres(coordinatesArr);
                 amqpChannel.ack(msg);
             }
@@ -71,7 +71,7 @@ async function insertIntoPostgres(coordinatesArr) {
         }
 
         const insertTransmisionValues = [];
-        const upsertVehiculosValues = [];
+        const updatePlacaValues = [];
 
         const uniqueCoordinates = new Map();
 
@@ -84,6 +84,8 @@ async function insertIntoPostgres(coordinatesArr) {
                 coordinate.altitud,
                 coordinate.orientacion,
                 coordinate.placa,
+                coordinate.empresaId,
+                `SRID=4326;POINT(${coordinate.longitud} ${coordinate.latitud})`,
                 INSTANCE_ID
             );
 
@@ -91,39 +93,39 @@ async function insertIntoPostgres(coordinatesArr) {
         });
 
         uniqueCoordinates.forEach((coordinate) => {
-            upsertVehiculosValues.push(
+            updatePlacaValues.push([
                 coordinate.placa,
-                coordinate.fechaHoraRegistroTrack,
-                coordinate.latitud,
-                coordinate.longitud,
                 coordinate.velocidad,
-                coordinate.altitud,
-                coordinate.orientacion
-            );
+                coordinate.fechaHoraRegistroTrack,
+                `SRID=4326;POINT(${coordinate.longitud} ${coordinate.latitud})`,
+            ]);
         });
 
         const insertTransmisionQuery = `
-        INSERT INTO scm.transmision (fecha_hora, lat, lng, velocidad, altitud, orientacion, placa, instance_id)
-        VALUES ${generatePlaceholders(coordinatesArr.length, 8)}`;
+        INSERT INTO transmisiones.transmision (fecha_hora, lat, lng, velocidad, altitud, orientacion, placa, empresa_id, geom, instance_id)
+        VALUES ${generatePlaceholders(coordinatesArr.length, 10)}`;
 
-        const upsertVehiculosQuery = `
-        INSERT INTO scm.vehiculos (placa, fecha_hora, lat, lng, velocidad, altitud, orientacion)
-        VALUES ${generatePlaceholders(uniqueCoordinates.size, 7)}
-        ON CONFLICT (placa) DO UPDATE 
+        const updatePlacaQuery = `
+        UPDATE gestion.placa AS p
         SET 
-            fecha_hora = EXCLUDED.fecha_hora,
-            lat = EXCLUDED.lat,
-            lng = EXCLUDED.lng,
-            velocidad = EXCLUDED.velocidad,
-            altitud = EXCLUDED.altitud,
-            orientacion = EXCLUDED.orientacion`;
+            speed = u.velocidad::DOUBLE PRECISION,
+            time_reception = NOW(),
+            time_device = u.time_device::TIMESTAMP,
+            geom = u.geom
+        FROM (
+            VALUES ${generatePlaceholders(uniqueCoordinates.size, 4)}
+        ) AS u(plate, velocidad, time_device, geom)
+        WHERE p.plate = u.plate`;
 
+        await postgresClient.query("BEGIN");
         await postgresClient.query(insertTransmisionQuery, insertTransmisionValues);
-        await postgresClient.query(upsertVehiculosQuery, upsertVehiculosValues);
+        await postgresClient.query(updatePlacaQuery, updatePlacaValues.flat());
+        await postgresClient.query("COMMIT");
 
-        console.log("Datos insertados en PostgreSQL.");
+        console.log("Datos insertados y actualizados en PostgreSQL.");
     } catch (error) {
         console.error("Error al insertar datos en PostgreSQL:", error);
+        await postgresClient.query("ROLLBACK");
     }
 }
 
