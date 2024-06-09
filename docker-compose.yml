@@ -128,7 +128,7 @@ services:
         networks:
             - app-network
 
-    coordinates-processor-taxis:
+    coordinates-processor-bicicletas:
         build:
             context: ./coordinates-processor
             dockerfile: Dockerfile
