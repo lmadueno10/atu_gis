@@ -2,13 +2,12 @@ const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
 const amqp = require("amqp-connection-manager");
-const os = require("os");
 const { Client } = require("pg");
 require("dotenv").config();
 
 const { PORT, AMQP_URL, PG_CONNECTION_STRING, INSTANCE_ID } = require("./src/config");
 
-const validateToken = require("./src/validateToken");
+const verifyClient = require("./src/verifyClient");
 const handleMessage = require("./src/handleMessage");
 
 const app = express();
@@ -25,6 +24,7 @@ const channelWrapper = connection.createChannel({
 const pgClient = new Client({
     connectionString: PG_CONNECTION_STRING,
 });
+
 pgClient.connect();
 
 const wss = new WebSocket.Server({
@@ -45,39 +45,16 @@ const wss = new WebSocket.Server({
         concurrencyLimit: 10,
         threshold: 1024,
     },
-    verifyClient: (info, done) => {
-        done(true);
-    },
+    verifyClient: async (info, done) => verifyClient(info, done, pgClient),
 });
 
 wss.on("connection", (ws, req) => {
     console.log("Nuevo cliente conectado");
+    ws.tokenValidation = req.tokenValidation;
 
     ws.on("message", async (message) => {
-        const params = new URLSearchParams(req.url.split("?")[1]);
-        const token = params.get("token");
-
-        if (!token) {
-            return ws.send(
-                JSON.stringify({
-                    codResultado: 15,
-                    desResultado: "Token no proporcionado en la URL",
-                })
-            );
-        }
-
-        const tokenValidation = await validateToken(pgClient, token);
-        if (!tokenValidation.isValid) {
-            return ws.send(
-                JSON.stringify({
-                    codResultado: 16,
-                    desResultado: "Token inválido o no autorizado",
-                })
-            );
-        }
-
         console.log("Mensaje recibido:", message);
-        await handleMessage(ws, message, tokenValidation.empresaId, channelWrapper);
+        await handleMessage(ws, message, ws.tokenValidation.empresaId, channelWrapper);
     });
 
     ws.on("close", () => {
