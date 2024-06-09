@@ -13,11 +13,17 @@ const PORT = process.env.PORT || 3001;
 const AMQP_URL = process.env.AMQP_URL || "amqp://localhost";
 
 /**
+ * Nombre de la cola de mensajes.
+ * @type {string}
+ */
+const QUEUE_NAME = process.env.QUEUE_NAME || "default_queue";
+
+/**
  * Cadena de conexión para la base de datos PostgreSQL.
  * @type {string}
  */
 const PG_CONNECTION_STRING =
-    process.env.PG_CONNECTION_STRING || "postgresql://atu_user:1a2a3b++@localhost:5432/testing";
+    process.env.PG_CONNECTION_STRING_SMC || "postgresql://atu_user:1a2a3b++@localhost:5432/testing";
 
 /**
  * Identificador único de la instancia del servidor.
@@ -46,6 +52,7 @@ const ERROR_CODES = {
 module.exports = {
     PORT,
     AMQP_URL,
+    QUEUE_NAME,
     PG_CONNECTION_STRING,
     INSTANCE_ID,
     SUCCESS_CODE,

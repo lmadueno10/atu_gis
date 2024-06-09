@@ -1,5 +1,5 @@
 const validateData = require("./validateData");
-const { SUCCESS_CODE, ERROR_CODES, INSTANCE_ID } = require("./config");
+const { QUEUE_NAME, SUCCESS_CODE, ERROR_CODES, INSTANCE_ID } = require("./config");
 
 /**
  * Maneja los mensajes recibidos a través de WebSocket.
@@ -31,7 +31,7 @@ module.exports = async function handleMessage(ws, message, empresaId, channelWra
             return ws.send(JSON.stringify(invalidData));
         }
 
-        const queueName = "transmission_queue";
+        const queueName = QUEUE_NAME;
 
         for (let i = 0; i < messagesArr.length; i += 1000) {
             const chunk = messagesArr.slice(i, i + 1000).map((msg) => ({

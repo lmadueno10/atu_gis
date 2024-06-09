@@ -8,7 +8,7 @@ import StatsPanel from "./components/StatsPanel/StatsPanel";
 
 function App() {
     const [markers, setMarkers] = useState([
-        { placa: "ABC126", position: [-12.0464, -77.0428] },
+        { placa: "BXX001", position: [-12.0464, -77.0428] },
         { placa: "DEF456", position: [-12.0455, -77.0301] },
         { placa: "GHI789", position: [-12.0483, -77.0283] },
         { placa: "GUT123", position: [-12.05, -77.04] },
@@ -17,29 +17,34 @@ function App() {
     const VITE_SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_SERVER_URL;
 
     useEffect(() => {
-        const socket = io(VITE_SOCKET_SERVER_URL, {
-            path: "/socket-io",
+        const socket = io("http://localhost:9090", {
+            path: "/socket-io/",
         });
 
-        console.log("VITE_SOCKET_SERVER_URL", import.meta.env.VITE_SOCKET_SERVER_URL);
+        //console.log("VITE_SOCKET_SERVER_URL", import.meta.env.VITE_SOCKET_SERVER_URL);
 
         socket.on("connect", () => {
             alert(socket.id);
             console.log("socket.id", socket.id);
-            const selectedPlaca = ["GUT123"];
+            const selectedPlaca = ["BXX001", "AVX107"];
             socket.emit("subscribeToPlaca", selectedPlaca);
             //socket.emit("unsubscribeFromPlaca");
             console.log("Conectado al servidor de sockets");
         });
 
-        socket.on("newCoordinates", (data) => {
-            alert("newCoordinates");
+        socket.on("newCoordinates", (data = []) => {
+            console.error(data);
+            data.forEach(({ placa, latitud, longitud }) => {
+                if (markerRefs.current[placa] && markerRefs.current[placa].current) {
+                    markerRefs.current[placa].current.setLatLng([latitud, longitud]);
+                }
+            });
 
-            const { placa, latitud, longitud } = data;
+            /*const { placa, latitud, longitud } = data;
 
             if (markerRefs.current[placa] && markerRefs.current[placa].current) {
                 markerRefs.current[placa].current.setLatLng([latitud, longitud]);
-            }
+            }*/
 
             //console.log("Evento recibido:", data);
         });

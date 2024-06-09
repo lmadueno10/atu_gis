@@ -7,6 +7,7 @@ const { Client } = require("pg");
 require("dotenv").config();
 
 const { PORT, AMQP_URL, PG_CONNECTION_STRING, INSTANCE_ID } = require("./src/config");
+
 const validateToken = require("./src/validateToken");
 const handleMessage = require("./src/handleMessage");
 
