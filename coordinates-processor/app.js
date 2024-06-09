@@ -19,8 +19,6 @@ async function connect() {
         await amqpChannel.assertQueue(QUEUE_NAME, { durable: true });
         amqpChannel.prefetch(1);
 
-        console.log("Esperando mensajes...");
-
         amqpChannel.consume(QUEUE_NAME, async (msg) => {
             if (msg !== null) {
                 const coordinatesArr = JSON.parse(msg.content.toString());
