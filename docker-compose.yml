@@ -74,6 +74,22 @@ services:
         networks:
             - app-network
 
+    coordinates-websocket-bicicletas:
+        build:
+            context: ./coordinates-websocket
+            dockerfile: Dockerfile
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+        environment:
+            - PG_CONNECTION_STRING_SMC=${PG_CONNECTION_STRING}
+            - AMQP_URL=${AMQP_URL}
+            - QUEUE_NAME=${QUEUE_NAME_BICICLETAS}
+        command: sh -c './wait-for-it.sh rabbitmq:5672 --timeout=30 -- npm run start'
+        networks:
+            - app-network
+
     coordinates-processor-buses:
         build:
             context: ./coordinates-processor
@@ -106,6 +122,25 @@ services:
             - PG_CONNECTION_STRING_TRX=${PG_CONNECTION_STRING_TAXIS}
             - AMQP_URL=${AMQP_URL}
             - QUEUE_NAME=${QUEUE_NAME_TAXIS}
+            - SOCKET_SERVER_URL=${SOCKET_SERVER_URL}
+            - REDIS_URL=${REDIS_URL}
+        command: sh -c './wait-for-it.sh rabbitmq:5672 --timeout=30 -- npm run start'
+        networks:
+            - app-network
+
+    coordinates-processor-taxis:
+        build:
+            context: ./coordinates-processor
+            dockerfile: Dockerfile
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+        environment:
+            - PG_CONNECTION_STRING_SMC=${PG_CONNECTION_STRING}
+            - PG_CONNECTION_STRING_TRX=${PG_CONNECTION_STRING_BICICLETAS}
+            - AMQP_URL=${AMQP_URL}
+            - QUEUE_NAME=${QUEUE_NAME_BICICLETAS}
             - SOCKET_SERVER_URL=${SOCKET_SERVER_URL}
             - REDIS_URL=${REDIS_URL}
         command: sh -c './wait-for-it.sh rabbitmq:5672 --timeout=30 -- npm run start'
