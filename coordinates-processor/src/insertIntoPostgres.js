@@ -1,4 +1,5 @@
 const { Client } = require("pg");
+const moment = require("moment-timezone");
 const { PG_CONNECTION_STRING_SMC, PG_CONNECTION_STRING_TRX, INSTANCE_ID } = require("./config");
 
 let postgresClientSmc;
@@ -31,6 +32,9 @@ async function insertIntoPostgres(coordinatesArr) {
         const insertTransmisionValues = [];
         const updatePlacaValues = [];
         const uniqueCoordinates = new Map();
+        const currentTimestamp = moment().tz("America/Lima").format();
+
+        console.log("henry cabro", currentTimestamp);
 
         coordinatesArr.forEach((coordinate) => {
             insertTransmisionValues.push(
@@ -43,6 +47,7 @@ async function insertIntoPostgres(coordinatesArr) {
                 coordinate.placa,
                 coordinate.empresaId,
                 `SRID=4326;POINT(${coordinate.longitud} ${coordinate.latitud})`,
+                currentTimestamp,
                 INSTANCE_ID
             );
             uniqueCoordinates.set(coordinate.placa, coordinate);
@@ -54,23 +59,24 @@ async function insertIntoPostgres(coordinatesArr) {
                 coordinate.velocidad,
                 coordinate.fechaHoraRegistroTrack,
                 `SRID=4326;POINT(${coordinate.longitud} ${coordinate.latitud})`,
+                currentTimestamp,
             ]);
         });
 
         const insertTransmisionQuery = `
-        INSERT INTO transmisiones.transmision (fecha_hora, lat, lng, velocidad, altitud, orientacion, placa, empresa_id, geom, instance_id)
-        VALUES ${generatePlaceholders(coordinatesArr.length, 10)}`;
+        INSERT INTO transmisiones.transmision (fecha_hora, lat, lng, velocidad, altitud, orientacion, placa, empresa_id, geom, fecha_hora_insercion, instance_id)
+        VALUES ${generatePlaceholders(coordinatesArr.length, 11)}`;
 
         const updatePlacaQuery = `
         UPDATE gestion.placa AS p
         SET 
             speed = u.velocidad::DOUBLE PRECISION,
-            time_reception = NOW(),
+            time_reception = u.time_reception::TIMESTAMP,
             time_device = u.time_device::TIMESTAMP,
             geom = u.geom
         FROM (
-            VALUES ${generatePlaceholders(uniqueCoordinates.size, 4)}
-        ) AS u(plate, velocidad, time_device, geom)
+            VALUES ${generatePlaceholders(uniqueCoordinates.size, 5)}
+        ) AS u(plate, velocidad, time_device, geom, time_reception)
         WHERE 
             p.plate = u.plate`;
 

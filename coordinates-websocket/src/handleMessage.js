@@ -32,7 +32,6 @@ module.exports = async function handleMessage(ws, message, empresaId, channelWra
         }
 
         const queueName = QUEUE_NAME;
-        console.log("enviar a ", queueName);
 
         for (let i = 0; i < messagesArr.length; i += 1000) {
             const chunk = messagesArr.slice(i, i + 1000).map((msg) => ({
