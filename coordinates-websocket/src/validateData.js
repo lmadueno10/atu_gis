@@ -1,4 +1,5 @@
 const { SUCCESS_CODE, INSTANCE_ID } = require("./config");
+const moment = require("moment-timezone");
 
 /**
  * Valida los datos de coordenadas recibidos.
@@ -31,10 +32,21 @@ module.exports = function validateData(data, mostrarPlaca = false) {
     }
 
     const fechaRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+
     if (!fechaRegex.test(fechaHoraRegistroTrack)) {
         return {
             codResultado: 7,
             desResultado: `Verificar fecha ingresada (Formato)${mensajePlaca}`,
+        };
+    }
+
+    // Validación para no permitir fechas anteriores a hoy
+    const today = moment().tz("America/Lima").startOf("day");
+    const fechaRegistro = moment(fechaHoraRegistroTrack, "YYYY-MM-DD HH:mm:ss");
+    if (fechaRegistro.isBefore(today)) {
+        return {
+            codResultado: 12,
+            desResultado: `Fecha de registro anterior a la fecha actual${mensajePlaca}`,
         };
     }
 
