@@ -41,12 +41,15 @@ module.exports = function validateData(data, mostrarPlaca = false) {
     }
 
     // Validación para no permitir fechas anteriores a hoy
-    const today = moment().tz("America/Lima").startOf("day");
-    const fechaRegistro = moment(fechaHoraRegistroTrack, "YYYY-MM-DD HH:mm:ss");
-    if (fechaRegistro.isBefore(today)) {
+    const now = moment().tz("America/Lima");
+    const fechaRegistro = moment.tz(fechaHoraRegistroTrack, "YYYY-MM-DD HH:mm:ss", "America/Lima");
+    const haceUnAno = now.clone().subtract(365, "days").startOf("day");
+    const cincoMinutosEnElFuturo = now.clone().add(5, "minutes");
+
+    if (fechaRegistro.isBefore(haceUnAno) || fechaRegistro.isAfter(cincoMinutosEnElFuturo)) {
         return {
-            codResultado: 12,
-            desResultado: `Fecha de registro anterior a la fecha actual${mensajePlaca}`,
+            resResultado: 12,
+            desResultado: `Fecha de registro debe estar dentro de los últimos 365 días y no más de 5 minutos en el futuro${mensajePlaca}`,
         };
     }
 

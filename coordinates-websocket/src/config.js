@@ -42,6 +42,7 @@ const SUCCESS_CODE = 1;
  * @type {object}
  */
 const ERROR_CODES = {
+    PARTIAL_SUCCESS: { code: 2, message: "Algunos registros tienen errores" },
     TOKEN_MISSING: { code: 15, message: "Token no proporcionado en la URL" },
     TOKEN_INVALID: { code: 16, message: "Token inválido o no autorizado" },
     DATA_MISSING: { code: 14, message: "No se recibieron datos de coordenadas" },
