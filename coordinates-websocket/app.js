@@ -68,12 +68,17 @@ wss.on("connection", (ws, req) => {
         }
     });
 
-    ws.on("close", () => {
-        console.log("Cliente desconectado");
+    ws.on("close", (code, reason) => {
+        console.log(`Cliente desconectado: Código ${code}, Razón ${reason}`);
     });
 
     ws.on("error", (err) => {
         console.error("WebSocket error:", err);
+    });
+
+    ws.on("finish", () => {
+        console.log("Finalizando conexión WebSocket.");
+        ws.close(1000, "Normal closure");
     });
 });
 
