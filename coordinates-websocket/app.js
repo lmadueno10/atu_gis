@@ -25,7 +25,14 @@ const pgClient = new Client({
     connectionString: PG_CONNECTION_STRING,
 });
 
-pgClient.connect();
+pgClient
+    .connect()
+    .then(() => {
+        console.log("Connected to PostgreSQL");
+    })
+    .catch((err) => {
+        console.error("Failed to connect to PostgreSQL:", err);
+    });
 
 const wss = new WebSocket.Server({
     server,
@@ -53,16 +60,24 @@ wss.on("connection", (ws, req) => {
     ws.tokenValidation = req.tokenValidation;
 
     ws.on("message", async (message) => {
-        console.log("Mensaje recibido:", message);
-        await handleMessage(ws, message, ws.tokenValidation.empresaId, channelWrapper);
+        try {
+            await handleMessage(ws, message, ws.tokenValidation.empresaId, channelWrapper);
+        } catch (err) {
+            console.error("Error handling message:", err);
+            ws.send(JSON.stringify({ error: "Error handling message" }));
+        }
     });
 
     ws.on("close", () => {
         console.log("Cliente desconectado");
     });
+
+    ws.on("error", (err) => {
+        console.error("WebSocket error:", err);
+    });
 });
 
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
     res.send(`Coordinates API OK!, instancia ${INSTANCE_ID}`);
 });
 
