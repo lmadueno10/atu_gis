@@ -57,6 +57,8 @@ services:
             - AMQP_URL=${AMQP_URL}
             - QUEUE_NAME=${QUEUE_NAME_BUSES}
         command: sh -c './wait-for-it.sh rabbitmq:5672 --timeout=30 -- npm run start'
+        stdin_open: true
+        tty: true
         networks:
             - app-network
 
@@ -73,6 +75,8 @@ services:
             - AMQP_URL=${AMQP_URL}
             - QUEUE_NAME=${QUEUE_NAME_TAXIS}
         command: sh -c './wait-for-it.sh rabbitmq:5672 --timeout=30 -- npm run start'
+        stdin_open: true
+        tty: true
         networks:
             - app-network
 
@@ -89,6 +93,8 @@ services:
             - AMQP_URL=${AMQP_URL}
             - QUEUE_NAME=${QUEUE_NAME_BICICLETAS}
         command: sh -c './wait-for-it.sh rabbitmq:5672 --timeout=30 -- npm run start'
+        stdin_open: true
+        tty: true
         networks:
             - app-network
 
