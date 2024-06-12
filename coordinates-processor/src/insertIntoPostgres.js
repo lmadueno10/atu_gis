@@ -45,8 +45,7 @@ async function insertIntoPostgres(coordinatesArr) {
                 coordinate.placa,
                 coordinate.empresaId,
                 `SRID=4326;POINT(${coordinate.longitud} ${coordinate.latitud})`,
-                currentTimestamp,
-                INSTANCE_ID
+                currentTimestamp
             );
             uniqueCoordinates.set(coordinate.placa, coordinate);
         });
@@ -62,8 +61,8 @@ async function insertIntoPostgres(coordinatesArr) {
         });
 
         const insertTransmisionQuery = `
-        INSERT INTO transmisiones.transmision (fecha_hora, lat, lng, velocidad, altitud, orientacion, placa, empresa_id, geom, fecha_hora_insercion, instance_id)
-        VALUES ${generatePlaceholders(coordinatesArr.length, 11)}`;
+        INSERT INTO transmisiones.transmision (fecha_hora, lat, lng, velocidad, altitud, orientacion, placa, empresa_id, geom, fecha_hora_insercion)
+        VALUES ${generatePlaceholders(coordinatesArr.length, 10)}`;
 
         const updatePlacaQuery = `
         UPDATE gestion.placa AS p
