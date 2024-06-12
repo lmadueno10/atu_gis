@@ -43,7 +43,7 @@ module.exports = function validateData(data, mostrarPlaca = false) {
     // Validación para no permitir fechas anteriores a hoy
     const now = moment().tz("America/Lima");
     const fechaRegistro = moment.tz(fechaHoraRegistroTrack, "YYYY-MM-DD HH:mm:ss", "America/Lima");
-    const haceUnAno = now.clone().subtract(365, "days").startOf("day");
+    const haceUnAno = now.clone().subtract(365, "days");
     const cincoMinutosEnElFuturo = now.clone().add(5, "minutes");
 
     console.log(`now: ${now}`);
