@@ -34,8 +34,6 @@ async function insertIntoPostgres(coordinatesArr) {
         const uniqueCoordinates = new Map();
         const currentTimestamp = moment().tz("America/Lima").format();
 
-        console.log("henry cabro", currentTimestamp);
-
         coordinatesArr.forEach((coordinate) => {
             insertTransmisionValues.push(
                 coordinate.fechaHoraRegistroTrack,

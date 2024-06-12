@@ -68,6 +68,15 @@ wss.on("connection", (ws, req) => {
         }
     });
 
+    ws.on("ping", () => {
+        console.log("Received ping, sending pong");
+        ws.pong();
+    });
+
+    ws.on("pong", () => {
+        console.log("Received pong");
+    });
+
     ws.on("close", (code, reason) => {
         console.log(`Cliente desconectado: Código ${code}, Razón ${reason}`);
     });
@@ -76,9 +85,14 @@ wss.on("connection", (ws, req) => {
         console.error("WebSocket error:", err);
     });
 
-    ws.on("finish", () => {
-        console.log("Finalizando conexión WebSocket.");
-        ws.close(1000, "Normal closure");
+    const pingInterval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.ping();
+        }
+    }, 30000);
+
+    ws.on("close", () => {
+        clearInterval(pingInterval);
     });
 });
 
