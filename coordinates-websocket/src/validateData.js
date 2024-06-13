@@ -46,11 +46,6 @@ module.exports = function validateData(data, mostrarPlaca = false) {
     const haceUnAno = now.clone().subtract(365, "days");
     const cincoMinutosEnElFuturo = now.clone().add(5, "minutes");
 
-    console.log(`now: ${now}`);
-    console.log(`fechaRegistro: ${fechaRegistro}`);
-    console.log(`haceUnAno: ${haceUnAno}`);
-    console.log(`cincoMinutosEnElFuturo: ${cincoMinutosEnElFuturo}`);
-
     if (fechaRegistro.isBefore(haceUnAno) || fechaRegistro.isAfter(cincoMinutosEnElFuturo)) {
         return {
             resResultado: 12,
