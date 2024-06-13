@@ -4,6 +4,8 @@ const { PORT, AMQP_URL, QUEUE_NAME } = require("./src/config");
 const insertIntoPostgres = require("./src/insertIntoPostgres");
 const emitCoordinatesToSubscribedUsers = require("./src/emitCoordinates");
 const { connectRedis } = require("./src/redisClient");
+const { poolSmc, poolTrx } = require("./src/pgPool");
+const connectWithRetry = require("./src/connectWithRetry");
 
 const app = express();
 let amqpConnection;
@@ -62,6 +64,8 @@ process.on("SIGINT", async () => {
 // Inicia la conexión y el servidor
 async function start() {
     await connectRedis();
+    connectWithRetry(poolSmc);
+    connectWithRetry(poolTrx);
     await connect();
 }
 

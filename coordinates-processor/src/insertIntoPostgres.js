@@ -1,9 +1,5 @@
-const { Client } = require("pg");
+const { poolSmc, poolTrx } = require("./pgPool");
 const moment = require("moment-timezone");
-const { PG_CONNECTION_STRING_SMC, PG_CONNECTION_STRING_TRX, INSTANCE_ID } = require("./config");
-
-let postgresClientSmc;
-let postgresClientTrx;
 
 function generatePlaceholders(count, valuesPerRow) {
     const placeholders = [];
@@ -18,17 +14,10 @@ function generatePlaceholders(count, valuesPerRow) {
 }
 
 async function insertIntoPostgres(coordinatesArr) {
+    const clientSmc = await poolSmc.connect();
+    const clientTrx = await poolTrx.connect();
+
     try {
-        if (!postgresClientSmc) {
-            postgresClientSmc = new Client({ connectionString: PG_CONNECTION_STRING_SMC });
-            await postgresClientSmc.connect();
-        }
-
-        if (!postgresClientTrx) {
-            postgresClientTrx = new Client({ connectionString: PG_CONNECTION_STRING_TRX });
-            await postgresClientTrx.connect();
-        }
-
         const insertTransmisionValues = [];
         const updatePlacaValues = [];
         const uniqueCoordinates = new Map();
@@ -77,19 +66,19 @@ async function insertIntoPostgres(coordinatesArr) {
         WHERE 
             p.plate = u.plate`;
 
-        await postgresClientTrx.query("BEGIN");
-        await postgresClientTrx.query(insertTransmisionQuery, insertTransmisionValues);
-        await postgresClientTrx.query("COMMIT");
+        await clientTrx.query("BEGIN");
+        await clientTrx.query(insertTransmisionQuery, insertTransmisionValues);
+        await clientTrx.query("COMMIT");
 
-        await postgresClientSmc.query("BEGIN");
-        await postgresClientSmc.query(updatePlacaQuery, updatePlacaValues.flat());
-        await postgresClientSmc.query("COMMIT");
+        await clientSmc.query("BEGIN");
+        await clientSmc.query(updatePlacaQuery, updatePlacaValues.flat());
+        await clientSmc.query("COMMIT");
 
         console.log("Datos insertados y actualizados en PostgreSQL.");
     } catch (error) {
         console.error("Error al insertar datos en PostgreSQL:", error);
-        await postgresClientTrx.query("ROLLBACK");
-        await postgresClientSmc.query("ROLLBACK");
+        clientSmc.release();
+        clientTrx.release();
     }
 }
 
