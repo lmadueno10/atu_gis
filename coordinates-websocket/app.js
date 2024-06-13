@@ -33,7 +33,7 @@ connectWithRetry(pool);
 
 const wss = new WebSocket.Server({
     server,
-    clientTracking: true,
+    clientTracking: false,
     perMessageDeflate: {
         zlibDeflateOptions: {
             chunkSize: 1024,
@@ -43,8 +43,8 @@ const wss = new WebSocket.Server({
         zlibInflateOptions: {
             chunkSize: 10 * 1024,
         },
-        clientNoContextTakeover: true,
-        serverNoContextTakeover: true,
+        clientNoContextTakeover: false,
+        serverNoContextTakeover: false,
         serverMaxWindowBits: 10,
         concurrencyLimit: 10,
         threshold: 1024,
