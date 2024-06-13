@@ -2,13 +2,14 @@ const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
 const amqp = require("amqp-connection-manager");
-const { Client } = require("pg");
+const { Pool } = require("pg");
 require("dotenv").config();
 
 const { PORT, AMQP_URL, PG_CONNECTION_STRING, INSTANCE_ID } = require("./src/config");
 
 const verifyClient = require("./src/verifyClient");
 const handleMessage = require("./src/handleMessage");
+const connectWithRetry = require("./src/connectWithRetry");
 
 const app = express();
 const server = http.createServer(app);
@@ -21,18 +22,14 @@ const channelWrapper = connection.createChannel({
     json: true,
 });
 
-const pgClient = new Client({
+const pool = new Pool({
     connectionString: PG_CONNECTION_STRING,
+    max: 50,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
 });
 
-pgClient
-    .connect()
-    .then(() => {
-        console.log("Connected to PostgreSQL");
-    })
-    .catch((err) => {
-        console.error("Failed to connect to PostgreSQL:", err);
-    });
+connectWithRetry(pool);
 
 const wss = new WebSocket.Server({
     server,
@@ -52,7 +49,7 @@ const wss = new WebSocket.Server({
         concurrencyLimit: 10,
         threshold: 1024,
     },
-    verifyClient: async (info, done) => verifyClient(info, done, pgClient),
+    verifyClient: async (info, done) => verifyClient(info, done, pool),
 });
 
 wss.on("connection", (ws, req) => {

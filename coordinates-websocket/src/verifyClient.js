@@ -1,6 +1,6 @@
 const validateToken = require("./validateToken");
 
-module.exports = async function verifyClient(info, done, pgClient) {
+module.exports = async function verifyClient(info, done, pool) {
     const params = new URLSearchParams(info.req.url.split("?")[1]);
     const token = params.get("token");
 
@@ -9,7 +9,8 @@ module.exports = async function verifyClient(info, done, pgClient) {
     }
 
     try {
-        const tokenValidation = await validateToken(pgClient, token);
+        const client = await pool.connect();
+        const tokenValidation = await validateToken(client, token);
 
         if (!tokenValidation.isValid) {
             return done(false, 403);
