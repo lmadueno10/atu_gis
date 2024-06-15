@@ -8,8 +8,10 @@ module.exports = async function verifyClient(info, done, pool) {
         return done(false, 401);
     }
 
+    let client;
+
     try {
-        const client = await pool.connect();
+        client = await pool.connect();
         const tokenValidation = await validateToken(client, token);
 
         if (!tokenValidation.isValid) {
