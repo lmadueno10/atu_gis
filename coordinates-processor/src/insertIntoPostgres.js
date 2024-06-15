@@ -77,6 +77,7 @@ async function insertIntoPostgres(coordinatesArr) {
         console.log("Datos insertados y actualizados en PostgreSQL.");
     } catch (error) {
         console.error("Error al insertar datos en PostgreSQL:", error);
+    } finally {
         clientSmc.release();
         clientTrx.release();
     }

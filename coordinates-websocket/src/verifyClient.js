@@ -11,6 +11,7 @@ module.exports = async function verifyClient(info, done, pool) {
     try {
         const client = await pool.connect();
         const tokenValidation = await validateToken(client, token);
+        client.release();
 
         if (!tokenValidation.isValid) {
             return done(false, 403);
