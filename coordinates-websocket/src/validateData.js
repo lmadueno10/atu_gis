@@ -23,24 +23,52 @@ module.exports = function validateData(data, mostrarPlaca = false) {
         };
     }
 
-    if (latitud === 0) {
+    /*if (latitud == 0) {
         return { codResultado: 5, desResultado: `Latitud no puede ser cero${mensajePlaca}` };
     }
 
-    if (longitud === 0) {
+    if (longitud == 0) {
         return { codResultado: 6, desResultado: `Longitud no puede ser cero${mensajePlaca}` };
+    }*/
+
+    if (typeof latitud !== "string") {
+        return {
+            codResultado: 5,
+            desResultado: `Latitud debe ser un string${mensajePlaca}`,
+        };
     }
 
+    if (latitud >= 0 || !/^-?\d+\.\d{5,}$/.test(latitud.toString())) {
+        return {
+            codResultado: 6,
+            desResultado: `Latitud debe ser negativa y tener al menos 5 decimales de precisión${mensajePlaca}`,
+        };
+    }
+
+    if (typeof longitud !== "string") {
+        return {
+            codResultado: 7,
+            desResultado: `Longitud debe ser un string${mensajePlaca}`,
+        };
+    }
+
+    if (longitud >= 0 || !/^-?\d+\.\d{5,}$/.test(longitud.toString())) {
+        return {
+            codResultado: 8,
+            desResultado: `Longitud debe ser negativa y tener al menos 5 decimales de precisión${mensajePlaca}`,
+        };
+    }
+
+    /* Validación para no permitir fechas anteriores a hoy */
     const fechaRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
 
     if (!fechaRegex.test(fechaHoraRegistroTrack)) {
         return {
-            codResultado: 7,
+            codResultado: 9,
             desResultado: `Verificar fecha ingresada (Formato)${mensajePlaca}`,
         };
     }
 
-    // Validación para no permitir fechas anteriores a hoy
     const now = moment().tz("America/Lima");
     const fechaRegistro = moment.tz(fechaHoraRegistroTrack, "YYYY-MM-DD HH:mm:ss", "America/Lima");
     const haceUnAno = now.clone().subtract(365, "days");
@@ -48,35 +76,36 @@ module.exports = function validateData(data, mostrarPlaca = false) {
 
     if (fechaRegistro.isBefore(haceUnAno) || fechaRegistro.isAfter(cincoMinutosEnElFuturo)) {
         return {
-            resResultado: 12,
+            resResultado: 10,
             desResultado: `Fecha de registro debe estar dentro de los últimos 365 días y no más de 5 minutos en el futuro${mensajePlaca}`,
         };
     }
+    /* */
 
-    if (latitud >= 0 || !/^-?\d+\.\d{5,}$/.test(latitud.toString())) {
+    if (altitud && typeof altitud !== "string") {
         return {
-            codResultado: 8,
-            desResultado: `Latitud debe ser negativa y tener al menos 5 decimales de precisión${mensajePlaca}`,
+            codResultado: 11,
+            desResultado: `Altitud debe ser un string${mensajePlaca}`,
         };
     }
 
-    if (longitud >= 0 || !/^-?\d+\.\d{5,}$/.test(longitud.toString())) {
+    if (altitud && !/^-?\d+\.\d+/.test(altitud.toString())) {
         return {
-            codResultado: 9,
-            desResultado: `Longitud debe ser negativa y tener al menos 5 decimales de precisión${mensajePlaca}`,
-        };
-    }
-
-    if (altitud && !/^-?\d+\.\d$/.test(altitud.toString())) {
-        return {
-            codResultado: 10,
+            codResultado: 12,
             desResultado: `Altitud debe tener al menos 1 decimal de precisión${mensajePlaca}`,
+        };
+    }
+
+    if (typeof velocidad !== "string") {
+        return {
+            codResultado: 13,
+            desResultado: `Velocidad debe ser un string${mensajePlaca}`,
         };
     }
 
     if (!/^-?\d+\.\d{2}$/.test(velocidad.toString())) {
         return {
-            codResultado: 11,
+            codResultado: 14,
             desResultado: `Velocidad debe tener al menos 2 decimales de precisión${mensajePlaca}`,
         };
     }

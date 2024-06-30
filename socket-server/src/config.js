@@ -4,7 +4,7 @@ const os = require("os");
  * Puerto en el que el servidor escuchará las conexiones.
  * @type {number}
  */
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT || 3001;
 
 /**
  * URL de conexión para el servidor Redis.
@@ -36,6 +36,24 @@ const CUSTOM_PATH = "/socket-io";
  */
 const INSTANCE_ID = `${os.hostname()}-${PORT}`;
 
+/**
+ * Nombre de la clave de suscripciones de usuario en Redis.
+ * @type {string}
+ */
+const REDIS_USER_SUBSCRIPTIONS = process.env.REDIS_USER_SUBSCRIPTIONS || "userSubscriptions";
+
+/**
+ * Nombre del campo utilizado para agrupar las coordenadas.
+ * @type {string}
+ */
+const ENTITY_FIELD = process.env.ENTITY_FIELD || "placa";
+
+/**
+ * Nombre del campo utilizado para agrupar las coordenadas.
+ * @type {string}
+ */
+const EVENT_NAME = (process.env.EVENT_NAME || "vehiclePosition").split(",");
+
 module.exports = {
     PORT,
     REDIS_URL,
@@ -43,4 +61,7 @@ module.exports = {
     REDIS_EXPIRATION,
     CUSTOM_PATH,
     INSTANCE_ID,
+    REDIS_USER_SUBSCRIPTIONS,
+    ENTITY_FIELD,
+    EVENT_NAME,
 };

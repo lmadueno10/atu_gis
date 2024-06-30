@@ -24,7 +24,7 @@ const channelWrapper = connection.createChannel({
 
 const pool = new Pool({
     connectionString: PG_CONNECTION_STRING,
-    max: 50,
+    max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
 });
@@ -53,7 +53,7 @@ const wss = new WebSocket.Server({
 });
 
 wss.on("connection", (ws, req) => {
-    console.log("Nuevo cliente conectado");
+    //console.log("Nuevo cliente conectado");
     ws.tokenValidation = req.tokenValidation;
 
     ws.on("message", async (message) => {
@@ -75,7 +75,7 @@ wss.on("connection", (ws, req) => {
     });
 
     ws.on("close", (code, reason) => {
-        console.log(`Cliente desconectado: Código ${code}, Razón ${reason}`);
+        //console.log(`Cliente desconectado: Código ${code}, Razón ${reason}`);
     });
 
     ws.on("error", (err) => {

@@ -1,22 +1,26 @@
+const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
+require("dotenv").config();
+
 const { PORT, CORS_ORIGIN, CUSTOM_PATH } = require("./src/config");
 const handleConnection = require("./src/socketHandlers");
 
-/**
- * Servidor HTTP para manejar las conexiones Socket.IO.
- */
-const server = http.createServer();
-
-/**
- * Instancia de Socket.IO con configuración de CORS y ruta personalizada.
- */
+const app = express();
+const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
         origin: CORS_ORIGIN,
         methods: ["GET", "POST"],
     },
     path: CUSTOM_PATH,
+});
+
+/**
+ * Healthcheck
+ */
+app.get("/ping", (_, res) => {
+    res.send("pong");
 });
 
 io.on("connection", (socket) => handleConnection(socket, io));

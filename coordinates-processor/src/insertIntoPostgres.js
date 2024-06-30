@@ -39,8 +39,11 @@ async function insertIntoPostgres(coordinatesArr) {
             uniqueCoordinates.set(coordinate.placa, coordinate);
         });
 
-        uniqueCoordinates.forEach((coordinate) => {
+        const allUniqueCoordinates = Array.from(uniqueCoordinates.values());
+
+        allUniqueCoordinates.forEach((coordinate) => {
             updatePlacaValues.push([
+                coordinate.empresaId,
                 coordinate.placa,
                 coordinate.velocidad,
                 coordinate.fechaHoraRegistroTrack,
@@ -54,17 +57,21 @@ async function insertIntoPostgres(coordinatesArr) {
         VALUES ${generatePlaceholders(coordinatesArr.length, 10)}`;
 
         const updatePlacaQuery = `
-        UPDATE gestion.placa AS p
-        SET 
-            speed = u.velocidad::DOUBLE PRECISION,
-            time_reception = u.time_reception::TIMESTAMP,
-            time_device = u.time_device::TIMESTAMP,
-            geom = u.geom
-        FROM (
-            VALUES ${generatePlaceholders(uniqueCoordinates.size, 5)}
-        ) AS u(plate, velocidad, time_device, geom, time_reception)
-        WHERE 
-            p.plate = u.plate`;
+        INSERT INTO gestion.placa (empresa_id, plate, speed, time_device, geom, time_reception)
+        VALUES ${generatePlaceholders(allUniqueCoordinates.length, 6)}
+        ON CONFLICT (plate) 
+        DO UPDATE SET 
+            empresa_id = EXCLUDED.empresa_id,
+            speed = EXCLUDED.speed::DOUBLE PRECISION,
+            time_reception = EXCLUDED.time_reception::TIMESTAMP,
+            time_device = EXCLUDED.time_device::TIMESTAMP,
+            geom = EXCLUDED.geom`;
+
+        console.log("insertTransmisionQuery:", insertTransmisionQuery);
+        console.log("insertTransmisionValues:", insertTransmisionValues);
+
+        console.log("updatePlacaQuery:", updatePlacaQuery);
+        console.log("updatePlacaValues:", updatePlacaValues.flat());
 
         await clientTrx.query("BEGIN");
         await clientTrx.query(insertTransmisionQuery, insertTransmisionValues);
@@ -77,6 +84,8 @@ async function insertIntoPostgres(coordinatesArr) {
         console.log("Datos insertados y actualizados en PostgreSQL.");
     } catch (error) {
         console.error("Error al insertar datos en PostgreSQL:", error);
+        await clientTrx.query("ROLLBACK");
+        await clientSmc.query("ROLLBACK");
     } finally {
         clientSmc.release();
         clientTrx.release();

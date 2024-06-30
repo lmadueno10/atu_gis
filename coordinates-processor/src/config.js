@@ -50,6 +50,12 @@ const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
  */
 const INSTANCE_ID = `${os.hostname()}-${PORT}`;
 
+/**
+ * Nombre del campo utilizado para agrupar las coordenadas.
+ * @type {string}
+ */
+const EVENT_NAME = process.env.EVENT_NAME || "vehiclePosition";
+
 module.exports = {
     PORT,
     AMQP_URL,
@@ -59,4 +65,5 @@ module.exports = {
     SOCKET_SERVER_URL,
     REDIS_URL,
     INSTANCE_ID,
+    EVENT_NAME,
 };

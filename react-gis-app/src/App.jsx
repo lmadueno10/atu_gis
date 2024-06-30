@@ -5,6 +5,7 @@ import MapContainer from "./components/MapContainer/MapContainer";
 import { Marker, Popup } from "react-leaflet";
 import MainLayout from "./layouts/MainLayout/MainLayout";
 import StatsPanel from "./components/StatsPanel/StatsPanel";
+import SimuladorFiscalizador from "./components/SimuladorFiscalizador/SimuladorFiscalizador";
 
 function App() {
     const [markers, setMarkers] = useState([
@@ -16,7 +17,7 @@ function App() {
     const markerRefs = useRef([]);
     const VITE_SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_SERVER_URL;
 
-    useEffect(() => {
+    /*useEffect(() => {
         const socket = io("http://localhost:9090", {
             path: "/socket-io/",
         });
@@ -40,11 +41,11 @@ function App() {
                 }
             });
 
-            /*const { placa, latitud, longitud } = data;
+            //const { placa, latitud, longitud } = data;
 
-            if (markerRefs.current[placa] && markerRefs.current[placa].current) {
-                markerRefs.current[placa].current.setLatLng([latitud, longitud]);
-            }*/
+            //if (markerRefs.current[placa] && markerRefs.current[placa].current) {
+            //markerRefs.current[placa].current.setLatLng([latitud, longitud]);
+            //}
 
             //console.log("Evento recibido:", data);
         });
@@ -58,9 +59,11 @@ function App() {
             unsubscribe();
             socket.disconnect();
         };
-    }, []);
+    }, []);*/
 
     //https://i.sstatic.net/6uSog.png
+
+    return <SimuladorFiscalizador />;
 
     return (
         <MainLayout>

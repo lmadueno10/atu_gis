@@ -10,11 +10,21 @@ const { QUEUE_NAME, SUCCESS_CODE, ERROR_CODES, INSTANCE_ID } = require("./config
  * @param {object} channelWrapper - El canal de AMQP para enviar mensajes a la cola.
  * @returns {Promise<void>}
  */
-module.exports = async function handleMessage(ws, message, companyId, channelWrapper) {
+module.exports = async function handleMessage(ws, message, empresaId, channelWrapper) {
     try {
         const messagesArr = Array.isArray(JSON.parse(message))
             ? JSON.parse(message)
             : [JSON.parse(message)];
+
+        if (messagesArr.length === 0) {
+            ws.send(
+                JSON.stringify({
+                    codResultado: ERROR_CODES.DATA_MISSING.code,
+                    desResultado: ERROR_CODES.DATA_MISSING.message,
+                })
+            );
+            return;
+        }
 
         const totalPlates = messagesArr.length;
         let platesProcessedSuccessfully = 0;
@@ -22,7 +32,8 @@ module.exports = async function handleMessage(ws, message, companyId, channelWra
         const errorDetails = [];
 
         messagesArr.forEach((data) => {
-            const result = validateData(data, messagesArr.length > 1);
+            const result = validateData(data, true);
+
             if (result.codResultado === SUCCESS_CODE) {
                 platesProcessedSuccessfully++;
             } else {
@@ -37,7 +48,7 @@ module.exports = async function handleMessage(ws, message, companyId, channelWra
             for (let i = 0; i < messagesArr.length; i += 1000) {
                 const chunk = messagesArr.slice(i, i + 1000).map((msg) => ({
                     ...msg,
-                    companyId,
+                    empresaId,
                 }));
                 await channelWrapper.sendToQueue(queueName, chunk, { persistent: true });
             }
@@ -51,7 +62,6 @@ module.exports = async function handleMessage(ws, message, companyId, channelWra
                     platesWithErrors > 0
                         ? "Algunos registros tienen errores."
                         : "Trama(s) correctamente recibida(s) y registrada(s).",
-                //INSTANCE_ID,
                 resResultado: {
                     totalPlacas: totalPlates,
                     placasProcesadasCorrectamente: platesProcessedSuccessfully,
@@ -64,6 +74,7 @@ module.exports = async function handleMessage(ws, message, companyId, channelWra
         console.error("Error processing the message:", message, error);
         const responseError =
             error instanceof SyntaxError ? ERROR_CODES.JSON_SYNTAX : ERROR_CODES.PROCESS_ERROR;
+
         ws.send(JSON.stringify(responseError));
     }
 };

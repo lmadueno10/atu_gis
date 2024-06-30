@@ -43,11 +43,11 @@ const SUCCESS_CODE = 1;
  */
 const ERROR_CODES = {
     PARTIAL_SUCCESS: { code: 2, message: "Algunos registros tienen errores" },
-    TOKEN_MISSING: { code: 15, message: "Token no proporcionado en la URL" },
-    TOKEN_INVALID: { code: 16, message: "Token inválido o no autorizado" },
-    DATA_MISSING: { code: 14, message: "No se recibieron datos de coordenadas" },
+    TOKEN_MISSING: { code: 17, message: "Token no proporcionado en la URL" },
+    TOKEN_INVALID: { code: 18, message: "Token inválido o no autorizado" },
+    DATA_MISSING: { code: 16, message: "No se recibieron datos de coordenadas" },
     JSON_SYNTAX: { code: 3, message: "Verificar JSON enviado" },
-    PROCESS_ERROR: { code: 13, message: "Error al procesar el mensaje" },
+    PROCESS_ERROR: { code: 15, message: "Error al procesar el mensaje" },
 };
 
 module.exports = {

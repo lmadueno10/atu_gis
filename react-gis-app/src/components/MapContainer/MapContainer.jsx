@@ -4,10 +4,9 @@ import "leaflet/dist/leaflet.css";
 
 import CustomZoomControl from "../CustomZoomControl/CustomZoomControl";
 
-export default function Map({ center = [], otherProps, children }) {
+export default function Map({ center = [], children, ...otherProps }) {
     return (
         <MapLeaflet
-            {...otherProps}
             center={center}
             zoom={13}
             style={{
@@ -17,6 +16,7 @@ export default function Map({ center = [], otherProps, children }) {
                 maxHeight: "calc(100vh - 64px)",
             }}
             zoomControl={false}
+            {...otherProps}
         >
             <TileLayer
                 attribution='&copy; <a href="http://www.thunderforest.com/">Thunderforest</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
